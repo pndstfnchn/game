@@ -2,206 +2,114 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>67生态缸·恋爱系统（修复版）</title>
+<title>关系模拟器</title>
 <style>
-body{background:#0f0f0f;color:#eee;font-family:Arial;display:flex}
-#left{width:70%}
-#right{width:30%;border-left:1px solid #333;padding:10px}
-#log{height:300px;overflow:auto;border:1px solid #444;margin:10px;padding:10px}
-button,select{margin:5px;padding:6px}
+body { font-family: Arial; background:#111; color:#eee; display:flex; gap:20px; }
+#left, #right { padding:10px; }
+#left { width:30%; background:#1c1c1c; border-radius:10px; }
+#right { width:70%; background:#222; border-radius:10px; }
+button { margin:2px; padding:5px; cursor:pointer; }
+.person { padding:3px; border-bottom:1px solid #333; }
+.log { height:400px; overflow:auto; background:#000; padding:10px; }
 </style>
 </head>
 <body>
 
 <div id="left">
-<h2>🧬 单生态缸·恋爱模拟（修复版）</h2>
-
-<select id="sel"></select>
-<button onclick="addToCage()">➕ 放入生态缸</button>
-<button onclick="removePerson()">🗑 移除</button>
-<button onclick="tick()">⏱ 运行一轮</button>
-
-<div id="log"></div>
+<h3>名单</h3>
+<div id="pool"></div>
+<hr>
+<h3>已加入游戏</h3>
+<div id="active"></div>
+<button onclick="startEvent()">▶ 运行一轮事件</button>
 </div>
 
 <div id="right">
-<h3>💞 关系面板</h3>
-<div id="panel"></div>
+<h3>关系日志</h3>
+<div class="log" id="log"></div>
 </div>
 
 <script>
-
-// ================= 初始名单 =================
-let names=[
-"田欣","张涵","张梦诗","贾明皓","韩昀恬","汪岩","赵海阳",
-"荣华斌","张思佳","张志熔","刘传鹏","张博轩","吴祎璇","杨靖宇",
-"颜培博","高赫遥","郑铁蔓","郑莉","刘晓凡","陈心妍","陈文博",
-"陆语","杨程凯","高雨晴","刘宪肴","于晓桐","王梓童","赵丽娇",
-"王涵艺","牟佳一","蔡雨杉","常春","沈屹峰","叶亦林","刘武燊",
-"孙不尘","李沁阳","邬镇泽","陈泓瑞","张子硕","张寒西","王钰淇",
-"魏昌锐","王羽饶","高芮","张泰瑜","刘美玲","陈哲","韩念琪",
-"王凌颢","吴依娜","江米乐","闻俊淇","王可茹","王安琪","翁凌胤",
-"林杨智","周鑫岩","栗响","萧淇源","杨子童","王慧博","蒲以钰",
-"刘东桓","刘佳怡","李梦涵","韩欣蕾"
+const names = [
+"田欣","张涵","张梦诗","贾明皓","韩昀恬","汪岩","赵海阳","荣华斌",
+"张思佳","张志熔","刘传鹏","张博轩","吴祎璇","杨靖宇","颜培博",
+"高赫遥","郑铁蔓","郑莉","刘晓凡","陈心妍","陈文博","陆语",
+"杨程凯","高雨晴","刘宪肴","于晓桐","王梓童","赵丽娇","王涵艺",
+"牟佳一","蔡雨杉","常春","沈屹峰","叶亦林","刘武燊","孙不尘",
+"李沁阳","邬镇泽","陈泓瑞","张子硕","张寒西","王钰淇","魏昌锐",
+"王羽饶","高芮","张泰瑜","刘美玲","陈哲","韩念琪","王凌颢",
+"吴依娜","江米乐","闻俊淇","王可茹","王安琪","翁凌胤","林杨智",
+"周鑫岩","栗响","萧淇源","杨子童","王慧博","蒲以钰","刘东桓",
+"刘佳怡","李梦涵","韩欣蕾"
 ];
 
-// ================= 数据 =================
-let data={};
-let cage=[];
+let active = [];
+let love = {};
+let logBox = document.getElementById("log");
 
-names.forEach(n=>{
-  data[n]={
-    love:{},
-    couple:null,
-    crush:null
-  };
-});
-
-// ================= UI =================
-let sel=document.getElementById("sel");
-
-function refreshSelect(){
-  sel.innerHTML="";
-  names.forEach(n=>{
-    let o=document.createElement("option");
-    o.value=n;o.innerText=n;
-    sel.appendChild(o);
-  });
-}
-refreshSelect();
-
-// ================= 日志 =================
-function log(t){
-  let d=document.getElementById("log");
-  d.innerHTML+="<div>"+t+"</div>";
-  d.scrollTop=9999;
-}
-
-// ================= 放入生态缸（恢复功能） =================
-function addToCage(){
-  let n=sel.value;
-  if(!cage.includes(n)){
-    cage.push(n);
-    log("➕ "+n+" 被放入生态缸");
-  }
-  render();
-}
-
-// ================= 移除 =================
-function removePerson(){
-  let n=sel.value;
-
-  cage=cage.filter(x=>x!==n);
-  delete data[n];
-
-  log("🗑 "+n+" 被移出生态缸");
-
-  for(let k in data){
-    if(data[k].couple===n) data[k].couple=null;
-    if(data[k].crush===n) data[k].crush=null;
-  }
-
-  names=names.filter(x=>x!==n);
-  refreshSelect();
-  render();
-}
-
-// ================= 主循环 =================
-function tick(){
-  if(cage.length<2){
-    log("⚠ 当前生态缸人数不足，无法模拟互动");
-    return;
-  }
-
-  let a=cage[Math.floor(Math.random()*cage.length)];
-  let b=cage[Math.floor(Math.random()*cage.length)];
-  if(a===b){
-    log("🔁 本轮重复抽取，系统重新计算关系波动");
-    return;
-  }
-
-  let eventLog = [];
-
-  // ===== 基础互动 =====
-  if(!data[a].love[b]) data[a].love[b]=0;
-  if(!data[b].love[a]) data[b].love[a]=0;
-
-  let deltaA = Math.random()*10;
-  let deltaB = Math.random()*10;
-
-  data[a].love[b]+=deltaA;
-  data[b].love[a]+=deltaB;
-
-  eventLog.push("❤️ "+a+" 对 "+b+" 好感+"+deltaA.toFixed(1));
-  eventLog.push("❤️ "+b+" 对 "+a+" 好感+"+deltaB.toFixed(1));
-
-  // ===== 成情侣 =====
-  if(!data[a].couple && !data[b].couple &&
-     data[a].love[b]>60 && data[b].love[a]>60){
-
-    data[a].couple=b;
-    data[b].couple=a;
-
-    eventLog.push("💞 新关系形成："+a+" ❤ "+b);
-  }
-
-  // ===== 单恋 =====
-  if(!data[a].couple && data[a].love[b]>40){
-    data[a].crush=b;
-    eventLog.push("💘 单恋触发："+a+" → "+b);
-  }
-
-  // ===== 出轨（情感偏移）=====
-  if(data[a].couple && data[a].love[b]>70 && data[a].couple!==b){
-    eventLog.push("💔 情感偏移："+a+" 对 "+b+" 产生额外倾向");
-  }
-
-  // ===== 三角关系 =====
-  let triangle=false;
-  for(let x of cage){
-    if(data[x].crush===a && data[a].crush===b){
-      eventLog.push("🔺 三角结构："+x+" → "+a+" → "+b);
-      triangle=true;
-    }
-  }
-
-  // ===== 强制反馈（关键）=====
-  log("━━━━━━━━━━━━━━");
-  log("⏱ 本轮互动："+a+" × "+b);
-
-  eventLog.forEach(e=>log(e));
-
-  if(eventLog.length===0){
-    log("🟡 本轮无重大关系变化（但系统仍在演化）");
-  }
-
-  log("━━━━━━━━━━━━━━");
-
-  renderPanel();
-}
-
-// ================= 面板 =================
-function renderPanel(){
-  let p=document.getElementById("panel");
-  let txt="";
-
-  cage.forEach(n=>{
-    if(data[n].couple){
-      txt+="💞 "+n+" ↔ "+data[n].couple+"<br>";
-    }
-    if(data[n].crush){
-      txt+="💘 "+n+" → "+data[n].crush+"<br>";
-    }
-  });
-
-  p.innerHTML=txt || "暂无关系";
-}
-
-// ================= 渲染 =================
 function render(){
-  log("📦 当前生态缸人数："+cage.length);
+    let pool = document.getElementById("pool");
+    let act = document.getElementById("active");
+    pool.innerHTML = "";
+    act.innerHTML = "";
+
+    names.forEach(n=>{
+        let btn = document.createElement("button");
+        btn.innerText = n;
+        btn.onclick = ()=>toggle(n);
+        pool.appendChild(btn);
+    });
+
+    active.forEach(n=>{
+        let d = document.createElement("div");
+        d.className="person";
+        d.innerText=n;
+        act.appendChild(d);
+    });
 }
 
+function toggle(name){
+    if(active.includes(name)){
+        active = active.filter(x=>x!=name);
+        log(name+" 离开了游戏");
+    }else{
+        active.push(name);
+        love[name]={};
+        log(name+" 加入了游戏");
+    }
+    render();
+}
+
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function startEvent(){
+    if(active.length<2){
+        log("人数不足，至少需要2人");
+        return;
+    }
+
+    let a = rand(active);
+    let b = rand(active.filter(x=>x!=a));
+
+    let event = Math.random();
+
+    if(event<0.33){
+        log(`💖 ${a} 对 ${b} 产生好感`);
+    }else if(event<0.66){
+        log(`💔 ${a} 和 ${b} 发生情感冲突，关系变淡`);
+    }else{
+        log(`💬 ${a} 与 ${b} 出现三角关系苗头（情感纠葛加深）`);
+    }
+}
+
+function log(t){
+    let div = document.createElement("div");
+    div.innerText = t;
+    logBox.appendChild(div);
+    logBox.scrollTop = logBox.scrollHeight;
+}
+
+render();
 </script>
 
 </body>
