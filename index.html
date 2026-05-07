@@ -108,45 +108,74 @@ function removePerson(){
 
 // ================= 主循环 =================
 function tick(){
-  if(cage.length<2) return;
+  if(cage.length<2){
+    log("⚠ 当前生态缸人数不足，无法模拟互动");
+    return;
+  }
 
   let a=cage[Math.floor(Math.random()*cage.length)];
   let b=cage[Math.floor(Math.random()*cage.length)];
-  if(a===b) return;
+  if(a===b){
+    log("🔁 本轮重复抽取，系统重新计算关系波动");
+    return;
+  }
 
+  let eventLog = [];
+
+  // ===== 基础互动 =====
   if(!data[a].love[b]) data[a].love[b]=0;
   if(!data[b].love[a]) data[b].love[a]=0;
 
-  data[a].love[b]+=Math.random()*10;
-  data[b].love[a]+=Math.random()*10;
+  let deltaA = Math.random()*10;
+  let deltaB = Math.random()*10;
 
-  // 💞 成情侣
+  data[a].love[b]+=deltaA;
+  data[b].love[a]+=deltaB;
+
+  eventLog.push("❤️ "+a+" 对 "+b+" 好感+"+deltaA.toFixed(1));
+  eventLog.push("❤️ "+b+" 对 "+a+" 好感+"+deltaB.toFixed(1));
+
+  // ===== 成情侣 =====
   if(!data[a].couple && !data[b].couple &&
      data[a].love[b]>60 && data[b].love[a]>60){
 
     data[a].couple=b;
     data[b].couple=a;
 
-    log("💞 "+a+" ❤ "+b+" 成为情侣");
+    eventLog.push("💞 新关系形成："+a+" ❤ "+b);
   }
 
-  // 💘 单恋
+  // ===== 单恋 =====
   if(!data[a].couple && data[a].love[b]>40){
     data[a].crush=b;
-    log("💘 "+a+" 单恋 "+b);
+    eventLog.push("💘 单恋触发："+a+" → "+b);
   }
 
-  // 💔 出轨
+  // ===== 出轨（情感偏移）=====
   if(data[a].couple && data[a].love[b]>70 && data[a].couple!==b){
-    log("💔 "+a+" 对 "+b+" 出现情感偏移（非情敌系统）");
+    eventLog.push("💔 情感偏移："+a+" 对 "+b+" 产生额外倾向");
   }
 
-  // 🔺 三角
+  // ===== 三角关系 =====
+  let triangle=false;
   for(let x of cage){
     if(data[x].crush===a && data[a].crush===b){
-      log("🔺 三角关系结构："+x+" → "+a+" → "+b);
+      eventLog.push("🔺 三角结构："+x+" → "+a+" → "+b);
+      triangle=true;
     }
   }
+
+  // ===== 强制反馈（关键）=====
+  log("━━━━━━━━━━━━━━");
+  log("⏱ 本轮互动："+a+" × "+b);
+
+  eventLog.forEach(e=>log(e));
+
+  if(eventLog.length===0){
+    log("🟡 本轮无重大关系变化（但系统仍在演化）");
+  }
+
+  log("━━━━━━━━━━━━━━");
 
   renderPanel();
 }
