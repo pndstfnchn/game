@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>67角色生态观察舱</title>
+<title>67生态舱·恋爱与情敌系统</title>
 <style>
 body{background:#0f0f0f;color:#eee;font-family:Arial;text-align:center}
 .box{border:1px solid #333;margin:10px;padding:10px}
@@ -13,7 +13,7 @@ select,button{margin:5px;padding:6px}
 </head>
 <body>
 
-<h2>🧬 67角色生态观察舱模拟器</h2>
+<h2>🧬 67生态舱 · 恋爱 + 情敌模拟系统</h2>
 
 <select id="sel"></select>
 <select id="cage">
@@ -23,23 +23,21 @@ select,button{margin:5px;padding:6px}
 <option value="D">生态舱 D</option>
 </select>
 
-<button onclick="add()">➕ 放入舱内</button>
-<button onclick="tick()">⏱ 运行一轮模拟</button>
-
-<div id="status"></div>
+<button onclick="add()">➕ 放入舱</button>
+<button onclick="tick()">⏱ 运行一轮</button>
 
 <div class="box">
-<div class="cage" id="A">A舱：空</div>
-<div class="cage" id="B">B舱：空</div>
-<div class="cage" id="C">C舱：空</div>
-<div class="cage" id="D">D舱：空</div>
+<div class="cage" id="A">A舱</div>
+<div class="cage" id="B">B舱</div>
+<div class="cage" id="C">C舱</div>
+<div class="cage" id="D">D舱</div>
 </div>
 
 <div id="log"></div>
 
 <script>
 
-// ===== 67人 =====
+// ================= 名单 =================
 let names=[
 "田欣","张涵","张梦诗","贾明皓","韩昀恬","汪岩","赵海阳",
 "荣华斌","张思佳","张志熔","刘传鹏","张博轩","吴祎璇","杨靖宇",
@@ -53,9 +51,21 @@ let names=[
 "刘东桓","刘佳怡","李梦涵","韩欣蕾"
 ];
 
-// ===== 生态舱 =====
+// ================= 数据系统 =================
+let data={};
 let cages={A:[],B:[],C:[],D:[]};
 
+names.forEach(n=>{
+  data[n]={
+    love:0,
+    spark:0,
+    anger:0,
+    couple:null,
+    rival:null
+  };
+});
+
+// ================= UI =================
 let sel=document.getElementById("sel");
 names.forEach(n=>{
   let o=document.createElement("option");
@@ -63,75 +73,14 @@ names.forEach(n=>{
   sel.appendChild(o);
 });
 
-// ===== 50+互动事件池 =====
-let events=[
-"发生资源争夺但未升级冲突",
-"形成短暂合作关系",
-"出现沉默观察期",
-"建立临时联盟",
-"观点发生碰撞",
-"共享信息资源",
-"形成领导结构",
-"尝试孤立某成员",
-"出现跟随行为",
-"出现模仿行为",
-"建立互助关系",
-"开始竞争注意力",
-"产生信任提升",
-"信任下降",
-"出现策略交换",
-"有人脱离群体行动",
-"群体重新洗牌",
-"出现角色反转",
-"出现冷处理关系",
-"形成稳定小团体",
-"讨论升级",
-"出现协调失败",
-"成功协作完成任务",
-"产生隐性竞争",
-"建立规则共识",
-"出现规则冲突",
-"有人尝试主导舱内节奏",
-"出现反主导行为",
-"出现信息垄断",
-"信息被共享",
-"出现情绪共鸣",
-"情绪对抗",
-"短暂和平",
-"关系重新分配",
-"出现边缘化成员",
-"边缘成员反向影响群体",
-"群体结构稳定",
-"出现裂变趋势",
-"重新结盟",
-"策略调整",
-"观察行为增加",
-"互动频率下降",
-"互动频率上升",
-"出现集体沉默",
-"出现核心节点形成",
-"核心节点被挑战",
-"出现协调者角色",
-"协调失败",
-"群体进入稳定循环",
-"舱内生态平衡建立"
-];
-
-// ===== 工具 =====
+// ================= 日志 =================
 function log(t){
   let d=document.getElementById("log");
   d.innerHTML+="<div>"+t+"</div>";
   d.scrollTop=9999;
 }
 
-function render(){
-  for(let k in cages){
-    document.getElementById(k).innerHTML=
-    k+"舱："+(cages[k].length?cages[k].join(" , "):"空");
-  }
-}
-
-// ===== 添加 =====
+// ================= 添加舱 =================
 function add(){
   let n=sel.value;
   let c=document.getElementById("cage").value;
@@ -142,16 +91,86 @@ function add(){
   render();
 }
 
-// ===== 模拟 =====
+// ================= 渲染 =================
+function render(){
+  for(let k in cages){
+    document.getElementById(k).innerHTML=
+    k+"舱："+(cages[k].length?cages[k].join(" , "):"空");
+  }
+}
+
+// ================= 主事件池 =================
+let events=[
+"资源共享","信息交换","短暂沉默","形成联盟","观点冲突",
+"策略调整","信任提升","信任下降","规则重组","行为模仿",
+"竞争加剧","关系缓和","结构稳定","边缘化出现",
+"核心节点形成","群体分裂","重新整合","观察行为增加",
+"互动频率上升","互动频率下降","情绪共鸣","情绪对抗",
+"集体沉默","协调失败","成功协作","权力转移",
+"隐性竞争","信息垄断","信息共享","短暂和平"
+];
+
+// ================= 恋爱系统 =================
+function romance(cage){
+  let arr=cages[cage];
+  if(arr.length<2) return;
+
+  let a=arr[Math.floor(Math.random()*arr.length)];
+  let b=arr[Math.floor(Math.random()*arr.length)];
+  if(a===b) return;
+
+  data[a].love+=Math.random()*10;
+  data[b].love+=Math.random()*10;
+  data[a].spark+=Math.random()*5;
+  data[b].spark+=Math.random()*5;
+
+  // 💞 成为情侣
+  if(!data[a].couple && !data[b].couple &&
+     data[a].love>60 && data[b].love>60 &&
+     data[a].spark>40 && data[b].spark>40){
+
+    data[a].couple=b;
+    data[b].couple=a;
+
+    log("💞 "+a+" ❤ "+b+" 形成恋爱关系");
+  }
+
+  // 💔 关系破裂
+  if(data[a].couple===b && Math.random()<0.08){
+    data[a].couple=null;
+    data[b].couple=null;
+    log("💔 "+a+" 与 "+b+" 关系破裂");
+  }
+
+  // ⚔️ 情敌系统
+  for(let x of arr){
+    if(x!==a && x!==b){
+      if(data[x].couple===b || data[x].couple===a){
+        data[x].rival=b;
+
+        if(Math.random()<0.3){
+          log("⚔️ "+x+" 对 "+b+" 产生情敌冲突！");
+          data[x].anger+=10;
+        }
+      }
+    }
+  }
+}
+
+// ================= 生态模拟 =================
 function tick(){
   for(let k in cages){
     if(cages[k].length>1){
+
       let a=cages[k][Math.floor(Math.random()*cages[k].length)];
       let b=cages[k][Math.floor(Math.random()*cages[k].length)];
       let ev=events[Math.floor(Math.random()*events.length)];
+
       if(a!==b){
         log("🧬 "+k+"舱："+a+" & "+b+" → "+ev);
       }
+
+      romance(k);
     }
   }
 }
