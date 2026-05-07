@@ -2,42 +2,35 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>67生态舱·恋爱与情敌系统</title>
+<title>67生态缸·复杂恋爱模拟</title>
 <style>
-body{background:#0f0f0f;color:#eee;font-family:Arial;text-align:center}
-.box{border:1px solid #333;margin:10px;padding:10px}
-#log{height:300px;overflow:auto;border:1px solid #444;width:85%;margin:10px auto;text-align:left;padding:10px}
-select,button{margin:5px;padding:6px}
-.cage{border:1px solid #555;margin:10px;padding:10px}
+body{background:#0f0f0f;color:#eee;font-family:Arial;display:flex}
+#left{width:70%}
+#right{width:30%;border-left:1px solid #333;padding:10px}
+#log{height:300px;overflow:auto;border:1px solid #444;margin:10px;padding:10px}
+button,select{margin:5px;padding:6px}
 </style>
 </head>
 <body>
 
-<h2>🧬 67生态舱 · 恋爱 + 情敌模拟系统</h2>
+<div id="left">
+<h2>🧬 单生态缸·复杂恋爱模拟器</h2>
 
 <select id="sel"></select>
-<select id="cage">
-<option value="A">生态舱 A</option>
-<option value="B">生态舱 B</option>
-<option value="C">生态舱 C</option>
-<option value="D">生态舱 D</option>
-</select>
-
-<button onclick="add()">➕ 放入舱</button>
+<button onclick="removePerson()">🗑 移除</button>
 <button onclick="tick()">⏱ 运行一轮</button>
 
-<div class="box">
-<div class="cage" id="A">A舱</div>
-<div class="cage" id="B">B舱</div>
-<div class="cage" id="C">C舱</div>
-<div class="cage" id="D">D舱</div>
+<div id="log"></div>
 </div>
 
-<div id="log"></div>
+<div id="right">
+<h3>💞 关系面板</h3>
+<div id="panel"></div>
+</div>
 
 <script>
 
-// ================= 名单 =================
+// ===== 人员 =====
 let names=[
 "田欣","张涵","张梦诗","贾明皓","韩昀恬","汪岩","赵海阳",
 "荣华斌","张思佳","张志熔","刘传鹏","张博轩","吴祎璇","杨靖宇",
@@ -51,21 +44,17 @@ let names=[
 "刘东桓","刘佳怡","李梦涵","韩欣蕾"
 ];
 
-// ================= 数据系统 =================
+// ===== 数据 =====
 let data={};
-let cages={A:[],B:[],C:[],D:[]};
-
 names.forEach(n=>{
   data[n]={
-    love:0,
-    spark:0,
-    anger:0,
-    couple:null,
-    rival:null
+    love:{},       // 对别人好感
+    couple:null,   // 情侣
+    crush:null     // 单恋目标
   };
 });
 
-// ================= UI =================
+// ===== UI =====
 let sel=document.getElementById("sel");
 names.forEach(n=>{
   let o=document.createElement("option");
@@ -73,109 +62,101 @@ names.forEach(n=>{
   sel.appendChild(o);
 });
 
-// ================= 日志 =================
+// ===== 日志 =====
 function log(t){
   let d=document.getElementById("log");
   d.innerHTML+="<div>"+t+"</div>";
   d.scrollTop=9999;
 }
 
-// ================= 添加舱 =================
-function add(){
+// ===== 移除角色 =====
+function removePerson(){
   let n=sel.value;
-  let c=document.getElementById("cage").value;
-  if(!cages[c].includes(n)){
-    cages[c].push(n);
-    log("➕ "+n+" 进入 "+c+"舱");
+  names=names.filter(x=>x!==n);
+  delete data[n];
+  log("🗑 "+n+" 被移出生态缸");
+
+  // 清理关系
+  for(let k in data){
+    if(data[k].couple===n) data[k].couple=null;
+    if(data[k].crush===n) data[k].crush=null;
   }
-  render();
+
+  refreshSelect();
 }
 
-// ================= 渲染 =================
-function render(){
-  for(let k in cages){
-    document.getElementById(k).innerHTML=
-    k+"舱："+(cages[k].length?cages[k].join(" , "):"空");
-  }
+// ===== 更新选择 =====
+function refreshSelect(){
+  sel.innerHTML="";
+  names.forEach(n=>{
+    let o=document.createElement("option");
+    o.value=n;o.innerText=n;
+    sel.appendChild(o);
+  });
 }
 
-// ================= 主事件池 =================
-let events=[
-"资源共享","信息交换","短暂沉默","形成联盟","观点冲突",
-"策略调整","信任提升","信任下降","规则重组","行为模仿",
-"竞争加剧","关系缓和","结构稳定","边缘化出现",
-"核心节点形成","群体分裂","重新整合","观察行为增加",
-"互动频率上升","互动频率下降","情绪共鸣","情绪对抗",
-"集体沉默","协调失败","成功协作","权力转移",
-"隐性竞争","信息垄断","信息共享","短暂和平"
-];
+// ===== 主循环 =====
+function tick(){
+  if(names.length<2) return;
 
-// ================= 恋爱系统 =================
-function romance(cage){
-  let arr=cages[cage];
-  if(arr.length<2) return;
-
-  let a=arr[Math.floor(Math.random()*arr.length)];
-  let b=arr[Math.floor(Math.random()*arr.length)];
+  let a=names[Math.floor(Math.random()*names.length)];
+  let b=names[Math.floor(Math.random()*names.length)];
   if(a===b) return;
 
-  data[a].love+=Math.random()*10;
-  data[b].love+=Math.random()*10;
-  data[a].spark+=Math.random()*5;
-  data[b].spark+=Math.random()*5;
+  // ❤️ 好感增长
+  if(!data[a].love[b]) data[a].love[b]=0;
+  if(!data[b].love[a]) data[b].love[a]=0;
+
+  data[a].love[b]+=Math.random()*10;
 
   // 💞 成为情侣
   if(!data[a].couple && !data[b].couple &&
-     data[a].love>60 && data[b].love>60 &&
-     data[a].spark>40 && data[b].spark>40){
+     data[a].love[b]>60 && data[b].love[a]>60){
 
     data[a].couple=b;
     data[b].couple=a;
-
-    log("💞 "+a+" ❤ "+b+" 形成恋爱关系");
+    log("💞 "+a+" ❤ "+b+" 成为情侣");
   }
 
-  // 💔 关系破裂
-  if(data[a].couple===b && Math.random()<0.08){
-    data[a].couple=null;
-    data[b].couple=null;
-    log("💔 "+a+" 与 "+b+" 关系破裂");
+  // 💘 单恋
+  if(!data[a].couple && data[a].love[b]>40){
+    data[a].crush=b;
+    log("💘 "+a+" 单恋 "+b);
   }
 
-  // ⚔️ 情敌系统
-  for(let x of arr){
-    if(x!==a && x!==b){
-      if(data[x].couple===b || data[x].couple===a){
-        data[x].rival=b;
+  // 💔 出轨（核心）
+  if(data[a].couple && data[a].love[b]>70 && data[a].couple!==b){
+    log("💔 "+a+" 对 "+b+" 出现出轨倾向（当前伴侣："+data[a].couple+"）");
+  }
 
-        if(Math.random()<0.3){
-          log("⚔️ "+x+" 对 "+b+" 产生情敌冲突！");
-          data[x].anger+=10;
-        }
-      }
+  // 🔺 三角关系
+  for(let x of names){
+    if(data[x].crush===a && data[a].crush===b){
+      log("🔺 三角关系： "+x+" → "+a+" → "+b);
     }
   }
+
+  renderPanel();
 }
 
-// ================= 生态模拟 =================
-function tick(){
-  for(let k in cages){
-    if(cages[k].length>1){
+// ===== 面板 =====
+function renderPanel(){
+  let p=document.getElementById("panel");
+  let txt="";
 
-      let a=cages[k][Math.floor(Math.random()*cages[k].length)];
-      let b=cages[k][Math.floor(Math.random()*cages[k].length)];
-      let ev=events[Math.floor(Math.random()*events.length)];
-
-      if(a!==b){
-        log("🧬 "+k+"舱："+a+" & "+b+" → "+ev);
-      }
-
-      romance(k);
+  names.forEach(n=>{
+    if(data[n].couple){
+      txt+="💞 "+n+" ↔ "+data[n].couple+"<br>";
     }
-  }
+    if(data[n].crush){
+      txt+="💘 "+n+" → "+data[n].crush+"<br>";
+    }
+  });
+
+  p.innerHTML=txt || "暂无关系";
 }
 
-render();
+renderPanel();
 
 </script>
 
