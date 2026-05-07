@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>67生态缸·复杂恋爱模拟</title>
+<title>67生态缸·恋爱系统（修复版）</title>
 <style>
 body{background:#0f0f0f;color:#eee;font-family:Arial;display:flex}
 #left{width:70%}
@@ -14,9 +14,10 @@ button,select{margin:5px;padding:6px}
 <body>
 
 <div id="left">
-<h2>🧬 单生态缸·复杂恋爱模拟器</h2>
+<h2>🧬 单生态缸·恋爱模拟（修复版）</h2>
 
 <select id="sel"></select>
+<button onclick="addToCage()">➕ 放入生态缸</button>
 <button onclick="removePerson()">🗑 移除</button>
 <button onclick="tick()">⏱ 运行一轮</button>
 
@@ -30,7 +31,7 @@ button,select{margin:5px;padding:6px}
 
 <script>
 
-// ===== 人员 =====
+// ================= 初始名单 =================
 let names=[
 "田欣","张涵","张梦诗","贾明皓","韩昀恬","汪岩","赵海阳",
 "荣华斌","张思佳","张志熔","刘传鹏","张博轩","吴祎璇","杨靖宇",
@@ -44,48 +45,21 @@ let names=[
 "刘东桓","刘佳怡","李梦涵","韩欣蕾"
 ];
 
-// ===== 数据 =====
+// ================= 数据 =================
 let data={};
+let cage=[];
+
 names.forEach(n=>{
   data[n]={
-    love:{},       // 对别人好感
-    couple:null,   // 情侣
-    crush:null     // 单恋目标
+    love:{},
+    couple:null,
+    crush:null
   };
 });
 
-// ===== UI =====
+// ================= UI =================
 let sel=document.getElementById("sel");
-names.forEach(n=>{
-  let o=document.createElement("option");
-  o.value=n;o.innerText=n;
-  sel.appendChild(o);
-});
 
-// ===== 日志 =====
-function log(t){
-  let d=document.getElementById("log");
-  d.innerHTML+="<div>"+t+"</div>";
-  d.scrollTop=9999;
-}
-
-// ===== 移除角色 =====
-function removePerson(){
-  let n=sel.value;
-  names=names.filter(x=>x!==n);
-  delete data[n];
-  log("🗑 "+n+" 被移出生态缸");
-
-  // 清理关系
-  for(let k in data){
-    if(data[k].couple===n) data[k].couple=null;
-    if(data[k].crush===n) data[k].crush=null;
-  }
-
-  refreshSelect();
-}
-
-// ===== 更新选择 =====
 function refreshSelect(){
   sel.innerHTML="";
   names.forEach(n=>{
@@ -94,27 +68,65 @@ function refreshSelect(){
     sel.appendChild(o);
   });
 }
+refreshSelect();
 
-// ===== 主循环 =====
+// ================= 日志 =================
+function log(t){
+  let d=document.getElementById("log");
+  d.innerHTML+="<div>"+t+"</div>";
+  d.scrollTop=9999;
+}
+
+// ================= 放入生态缸（恢复功能） =================
+function addToCage(){
+  let n=sel.value;
+  if(!cage.includes(n)){
+    cage.push(n);
+    log("➕ "+n+" 被放入生态缸");
+  }
+  render();
+}
+
+// ================= 移除 =================
+function removePerson(){
+  let n=sel.value;
+
+  cage=cage.filter(x=>x!==n);
+  delete data[n];
+
+  log("🗑 "+n+" 被移出生态缸");
+
+  for(let k in data){
+    if(data[k].couple===n) data[k].couple=null;
+    if(data[k].crush===n) data[k].crush=null;
+  }
+
+  names=names.filter(x=>x!==n);
+  refreshSelect();
+  render();
+}
+
+// ================= 主循环 =================
 function tick(){
-  if(names.length<2) return;
+  if(cage.length<2) return;
 
-  let a=names[Math.floor(Math.random()*names.length)];
-  let b=names[Math.floor(Math.random()*names.length)];
+  let a=cage[Math.floor(Math.random()*cage.length)];
+  let b=cage[Math.floor(Math.random()*cage.length)];
   if(a===b) return;
 
-  // ❤️ 好感增长
   if(!data[a].love[b]) data[a].love[b]=0;
   if(!data[b].love[a]) data[b].love[a]=0;
 
   data[a].love[b]+=Math.random()*10;
+  data[b].love[a]+=Math.random()*10;
 
-  // 💞 成为情侣
+  // 💞 成情侣
   if(!data[a].couple && !data[b].couple &&
      data[a].love[b]>60 && data[b].love[a]>60){
 
     data[a].couple=b;
     data[b].couple=a;
+
     log("💞 "+a+" ❤ "+b+" 成为情侣");
   }
 
@@ -124,27 +136,27 @@ function tick(){
     log("💘 "+a+" 单恋 "+b);
   }
 
-  // 💔 出轨（核心）
+  // 💔 出轨
   if(data[a].couple && data[a].love[b]>70 && data[a].couple!==b){
-    log("💔 "+a+" 对 "+b+" 出现出轨倾向（当前伴侣："+data[a].couple+"）");
+    log("💔 "+a+" 对 "+b+" 出现情感偏移（非情敌系统）");
   }
 
-  // 🔺 三角关系
-  for(let x of names){
+  // 🔺 三角
+  for(let x of cage){
     if(data[x].crush===a && data[a].crush===b){
-      log("🔺 三角关系： "+x+" → "+a+" → "+b);
+      log("🔺 三角关系结构："+x+" → "+a+" → "+b);
     }
   }
 
   renderPanel();
 }
 
-// ===== 面板 =====
+// ================= 面板 =================
 function renderPanel(){
   let p=document.getElementById("panel");
   let txt="";
 
-  names.forEach(n=>{
+  cage.forEach(n=>{
     if(data[n].couple){
       txt+="💞 "+n+" ↔ "+data[n].couple+"<br>";
     }
@@ -156,7 +168,10 @@ function renderPanel(){
   p.innerHTML=txt || "暂无关系";
 }
 
-renderPanel();
+// ================= 渲染 =================
+function render(){
+  log("📦 当前生态缸人数："+cage.length);
+}
 
 </script>
 
