@@ -2,37 +2,34 @@
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>67人怪物回合制游戏</title>
+<title>67人互动养成模拟器</title>
 <style>
-body { font-family: Arial; background:#111; color:#eee; text-align:center; }
-#log { height:300px; overflow:auto; border:1px solid #444; padding:10px; margin:10px auto; width:80%; text-align:left; }
-button { margin:5px; padding:10px; }
-.bar { height:20px; background:red; margin:5px 0; }
+body{background:#111;color:#eee;font-family:Arial;text-align:center}
+#log{height:300px;overflow:auto;border:1px solid #444;width:85%;margin:10px auto;text-align:left;padding:10px}
+button{margin:5px;padding:8px}
+.card{border:1px solid #333;padding:10px;margin:10px auto;width:85%}
 </style>
 </head>
 <body>
 
-<h1>⚔️ 67人怪物回合制通关游戏</h1>
-
-<div id="status"></div>
+<h2>🎮 67人互动养成模拟器</h2>
 
 <div>
-<button onclick="attack()">普通攻击</button>
-<button onclick="skill()">技能攻击</button>
-<button onclick="heal()">治疗</button>
+<select id="sel"></select>
 </div>
 
+<div>
+<button onclick="punch()">👊 揍一拳</button>
+<button onclick="kiss()">💋 亲一口</button>
+<button onclick="adopt()">🐾 养起来</button>
+</div>
+
+<div id="status"></div>
 <div id="log"></div>
 
 <script>
-// ====== 玩家 ======
-let player = {
-  hp: 120,
-  atk: 18,
-  heal: 25
-};
 
-// ====== 67人怪物池 ======
+// ===== 名单 =====
 let names = [
 "田欣","张涵","张梦诗","贾明皓","韩昀恬","汪岩","赵海阳",
 "荣华斌","张思佳","张志熔","刘传鹏","张博轩","吴祎璇","杨靖宇",
@@ -46,85 +43,135 @@ let names = [
 "刘东桓","刘佳怡","李梦涵","韩欣蕾"
 ];
 
-// ====== 当前敌人 ======
-let enemy = null;
+let data = {};
+let pets = [];
 
-function newEnemy(){
-  let name = names[Math.floor(Math.random()*names.length)];
-  let hp = 60 + Math.floor(Math.random()*80);
-  let atk = 8 + Math.floor(Math.random()*12);
-  enemy = { name, hp, atk };
-  log("出现敌人：" + name + " HP:" + hp);
-  update();
+names.forEach(n=>{
+  data[n]={
+    love:50,
+    anger:0,
+    bond:false
+  }
+});
+
+// ===== UI =====
+let sel=document.getElementById("sel");
+names.forEach(n=>{
+  let o=document.createElement("option");
+  o.value=n;o.innerText=n;
+  sel.appendChild(o);
+});
+
+function log(t){
+  let d=document.getElementById("log");
+  d.innerHTML+="<div>"+t+"</div>";
+  d.scrollTop=9999;
 }
 
-// ====== UI ======
-function log(t){
-  let div = document.getElementById("log");
-  div.innerHTML += "<div>" + t + "</div>";
-  div.scrollTop = 9999;
+function current(){
+  return sel.value;
 }
 
 function update(){
-  document.getElementById("status").innerHTML =
-    "玩家 HP: " + player.hp +
-    "<br>敌人: " + (enemy ? enemy.name : "无") +
-    (enemy ? "<div class='bar' style='width:" + enemy.hp + "px'></div>" : "");
+  let n=current();
+  let d=data[n];
+  document.getElementById("status").innerHTML=
+  "当前对象："+n+
+  "<br>好感："+d.love+
+  " | 情绪："+d.anger+
+  " | 养成："+(d.bond?"已养":"未养");
 }
 
-// ====== 玩家攻击 ======
-function attack(){
-  if(!enemy) return;
-  let dmg = player.atk + Math.floor(Math.random()*6);
-  enemy.hp -= dmg;
-  log("你造成 " + dmg + " 伤害");
+sel.onchange=update;
 
-  if(enemy.hp <= 0){
-    log("击败 " + enemy.name);
-    enemy = null;
-    setTimeout(newEnemy, 800);
-  } else enemyTurn();
+// ===== 行为系统 =====
+function punch(){
+  let n=current();
+  let d=data[n];
+
+  let msg=[
+    "愣住了然后后退一步",
+    "冷冷看了你一眼",
+    "直接转身离开",
+    "记仇了",
+    "好感暴跌"
+  ][Math.floor(Math.random()*5)];
+
+  d.love-=15;
+  d.anger+=20;
+
+  log(n+" 被揍了一拳："+msg);
+
+  checkEnd(n);
   update();
 }
 
-function skill(){
-  if(!enemy) return;
-  let dmg = player.atk * 2 + Math.floor(Math.random()*10);
-  enemy.hp -= dmg;
-  log("技能攻击！造成 " + dmg);
+function kiss(){
+  let n=current();
+  let d=data[n];
 
-  if(enemy.hp <= 0){
-    log("击败 " + enemy.name);
-    enemy = null;
-    setTimeout(newEnemy, 800);
-  } else enemyTurn();
+  let msg=[
+    "脸红了但没说话",
+    "愣住三秒",
+    "轻轻推开你",
+    "偷偷加了好感",
+    "装作没发生"
+  ][Math.floor(Math.random()*5)];
+
+  d.love+=20;
+  d.anger+=5;
+
+  log(n+" 被亲了一口："+msg);
+
+  checkEnd(n);
   update();
 }
 
-function heal(){
-  let h = player.heal + Math.floor(Math.random()*10);
-  player.hp += h;
-  log("恢复 " + h + " HP");
-  enemyTurn();
+function adopt(){
+  let n=current();
+  let d=data[n];
+
+  if(d.bond){
+    log(n+" 已经被养过了");
+    return;
+  }
+
+  d.bond=true;
+  pets.push(n);
+
+  log("你养起了 "+n);
+
+  // 羁绊事件
+  if(pets.length>1){
+    let a=pets[Math.floor(Math.random()*pets.length)];
+    let b=pets[Math.floor(Math.random()*pets.length)];
+    if(a!==b){
+      log("🐾 "+a+" 和 "+b+" 发生互动：一起争地盘 / 一起安静待着 / 无声对视（随机）");
+    }
+  }
+
+  checkEnd(n);
   update();
 }
 
-// ====== 敌人回合 ======
-function enemyTurn(){
-  if(!enemy) return;
-  let dmg = enemy.atk + Math.floor(Math.random()*6);
-  player.hp -= dmg;
-  log(enemy.name + " 攻击你 " + dmg);
+// ===== 结局 =====
+function checkEnd(n){
+  let d=data[n];
 
-  if(player.hp <= 0){
-    log("你被击败了！");
-    alert("游戏结束");
-    location.reload();
+  if(d.anger>80){
+    log("💀 "+n+" 进入【敌对结局】");
+  }
+
+  if(d.love>120){
+    log("💞 "+n+" 进入【依赖结局】");
+  }
+
+  if(d.bond && d.love>90){
+    log("🏡 "+n+" 进入【长期共存结局】");
   }
 }
 
-// ====== start ======
-newEnemy();
+// 初始化
 update();
 
 </script>
