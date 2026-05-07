@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>67人怪物回合制游戏</title>
+<style>
+body { font-family: Arial; background:#111; color:#eee; text-align:center; }
+#log { height:300px; overflow:auto; border:1px solid #444; padding:10px; margin:10px auto; width:80%; text-align:left; }
+button { margin:5px; padding:10px; }
+.bar { height:20px; background:red; margin:5px 0; }
+</style>
+</head>
+<body>
+
+<h1>⚔️ 67人怪物回合制通关游戏</h1>
+
+<div id="status"></div>
+
+<div>
+<button onclick="attack()">普通攻击</button>
+<button onclick="skill()">技能攻击</button>
+<button onclick="heal()">治疗</button>
+</div>
+
+<div id="log"></div>
+
+<script>
+// ====== 玩家 ======
+let player = {
+  hp: 120,
+  atk: 18,
+  heal: 25
+};
+
+// ====== 67人怪物池 ======
+let names = [
+"田欣","张涵","张梦诗","贾明皓","韩昀恬","汪岩","赵海阳",
+"荣华斌","张思佳","张志熔","刘传鹏","张博轩","吴祎璇","杨靖宇",
+"颜培博","高赫遥","郑铁蔓","郑莉","刘晓凡","陈心妍","陈文博",
+"陆语","杨程凯","高雨晴","刘宪肴","于晓桐","王梓童","赵丽娇",
+"王涵艺","牟佳一","蔡雨杉","常春","沈屹峰","叶亦林","刘武燊",
+"孙不尘","李沁阳","邬镇泽","陈泓瑞","张子硕","张寒西","王钰淇",
+"魏昌锐","王羽饶","高芮","张泰瑜","刘美玲","陈哲","韩念琪",
+"王凌颢","吴依娜","江米乐","闻俊淇","王可茹","王安琪","翁凌胤",
+"林杨智","周鑫岩","栗响","萧淇源","杨子童","王慧博","蒲以钰",
+"刘东桓","刘佳怡","李梦涵","韩欣蕾"
+];
+
+// ====== 当前敌人 ======
+let enemy = null;
+
+function newEnemy(){
+  let name = names[Math.floor(Math.random()*names.length)];
+  let hp = 60 + Math.floor(Math.random()*80);
+  let atk = 8 + Math.floor(Math.random()*12);
+  enemy = { name, hp, atk };
+  log("出现敌人：" + name + " HP:" + hp);
+  update();
+}
+
+// ====== UI ======
+function log(t){
+  let div = document.getElementById("log");
+  div.innerHTML += "<div>" + t + "</div>";
+  div.scrollTop = 9999;
+}
+
+function update(){
+  document.getElementById("status").innerHTML =
+    "玩家 HP: " + player.hp +
+    "<br>敌人: " + (enemy ? enemy.name : "无") +
+    (enemy ? "<div class='bar' style='width:" + enemy.hp + "px'></div>" : "");
+}
+
+// ====== 玩家攻击 ======
+function attack(){
+  if(!enemy) return;
+  let dmg = player.atk + Math.floor(Math.random()*6);
+  enemy.hp -= dmg;
+  log("你造成 " + dmg + " 伤害");
+
+  if(enemy.hp <= 0){
+    log("击败 " + enemy.name);
+    enemy = null;
+    setTimeout(newEnemy, 800);
+  } else enemyTurn();
+  update();
+}
+
+function skill(){
+  if(!enemy) return;
+  let dmg = player.atk * 2 + Math.floor(Math.random()*10);
+  enemy.hp -= dmg;
+  log("技能攻击！造成 " + dmg);
+
+  if(enemy.hp <= 0){
+    log("击败 " + enemy.name);
+    enemy = null;
+    setTimeout(newEnemy, 800);
+  } else enemyTurn();
+  update();
+}
+
+function heal(){
+  let h = player.heal + Math.floor(Math.random()*10);
+  player.hp += h;
+  log("恢复 " + h + " HP");
+  enemyTurn();
+  update();
+}
+
+// ====== 敌人回合 ======
+function enemyTurn(){
+  if(!enemy) return;
+  let dmg = enemy.atk + Math.floor(Math.random()*6);
+  player.hp -= dmg;
+  log(enemy.name + " 攻击你 " + dmg);
+
+  if(player.hp <= 0){
+    log("你被击败了！");
+    alert("游戏结束");
+    location.reload();
+  }
+}
+
+// ====== start ======
+newEnemy();
+update();
+
+</script>
+
+</body>
+</html>
